@@ -1,0 +1,44 @@
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# virtual envs
+.venv/
+venv/
+env/
+
+# environment and secrets
+.env
+*.key
+
+# local-only docs (plan, decisions, alarm spec: contain home/network internals)
+docs/
+
+# enrolment data and runtime artefacts (never commit faces or snapshots)
+enrolment/reference/
+snapshots/
+*.npy
+*.npz
+
+# test and tooling caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# grafana / prometheus runtime volumes
+deploy/grafana/data/
+deploy/prometheus/data/
+
+# Local scratch (live probe harness, grabbed frames, face crops); never committed.
+tmp/

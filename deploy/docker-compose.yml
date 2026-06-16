@@ -1,0 +1,84 @@
+# 5090 side stack. Container first so it can move to Linux or Kubernetes later.
+# Bring up with: make up  (from the repo root)
+
+services:
+  inference-server:
+    # Blackwell (RTX 50-series) needs the cu128 rebuild; see inference-blackwell.Dockerfile.
+    # On older GPUs you can use image: roboflow/roboflow-inference-server-gpu:latest instead.
+    build:
+      context: ..
+      dockerfile: deploy/inference-blackwell.Dockerfile
+    image: roboflow-inference-blackwell
+    container_name: face-recon-inference
+    ports:
+      - "9001:9001"
+    environment:
+      - ROBOFLOW_API_KEY=${RF_API_KEY}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  decision-service:
+    build:
+      context: ..
+      dockerfile: deploy/decision-service.Dockerfile
+    image: face-recon-decision
+    container_name: face-recon-decision
+    env_file:
+      - ../.env
+    environment:
+      # Inside the compose network the inference server is reachable by name.
+      - FACE_RECON_INFERENCE_SERVER_URL=http://inference-server:9001
+      # Run the live per-frame loop with insightface on the GPU.
+      - FACE_RECON_LIVE_ENABLED=true
+      - FACE_RECON_FACE_USE_GPU=true
+      - FACE_RECON_FACE_LANDMARKER_MODEL_PATH=/app/models/face_landmarker.task
+    volumes:
+      # Personal reference set (gitignored): place known.npz here on the host, not in the image.
+      - ../enrolment/reference:/app/enrolment/reference:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "8000:8000"
+    depends_on:
+      - inference-server
+    # NOTE: the decision-service must reach your camera stream (FACE_RECON_STREAM_URL). If the
+    # camera is on another host/network, give the container host networking or a route. The
+    # inference server is reachable by service name regardless.
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: face-recon-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - decision-service
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: face-recon-grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
