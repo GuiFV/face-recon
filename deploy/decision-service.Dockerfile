@@ -21,10 +21,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH"
 
-# python plus the shared libraries opencv and mediapipe need even in headless mode.
+# python plus the shared libraries opencv and mediapipe need even in headless mode. MediaPipe's
+# face landmarker dlopens the GLES/EGL runtime (libGLESv2.so.2, libEGL.so.1) at first use, so
+# those must be present or the liveness challenge throws on every frame.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        python3 python3-venv libgl1 libglib2.0-0 wget \
+        python3 python3-venv libgl1 libgles2 libegl1 libglib2.0-0 wget \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
