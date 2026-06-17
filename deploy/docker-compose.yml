@@ -12,8 +12,10 @@ services:
     container_name: face-recon-inference
     ports:
       - "9001:9001"
-    environment:
-      - ROBOFLOW_API_KEY=${RF_API_KEY}
+    # Reads ROBOFLOW_API_KEY from the repo-root .env (CWD-independent: env_file is resolved
+    # relative to this compose file, so it works no matter where `docker compose` is run).
+    env_file:
+      - ../.env
     deploy:
       resources:
         reservations:
