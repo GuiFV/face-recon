@@ -14,8 +14,8 @@ def test_defaults_are_sane():
 
 
 def test_roboflow_uses_plain_env_names(monkeypatch):
-    monkeypatch.setenv("RF_API_KEY", "secret-key")
-    monkeypatch.setenv("RF_WORKSPACE", "my-workspace")
+    monkeypatch.setenv("ROBOFLOW_API_KEY", "secret-key")
+    monkeypatch.setenv("ROBOFLOW_WORKSPACE", "my-workspace")
     s = Settings(_env_file=None)
     assert s.roboflow_api_key == "secret-key"
     assert s.roboflow_workspace == "my-workspace"

@@ -1,8 +1,9 @@
 """Application settings.
 
 Project settings use the FACE_RECON_ env prefix. The Roboflow credentials use the plain
-names RF_API_KEY and RF_WORKSPACE (matching the deployment .env). Kept free of heavy CV
-imports so it stays cheap to import and easy to test.
+names ROBOFLOW_API_KEY and ROBOFLOW_WORKSPACE, with no prefix, so the same ROBOFLOW_API_KEY
+value also feeds the bundled inference server (one value, not two). This module is kept free
+of heavy CV imports, so it stays cheap to import and easy to test.
 """
 
 from __future__ import annotations
@@ -20,9 +21,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # --- Roboflow (plain env names, no prefix) ---
-    roboflow_api_key: str = Field(default="", validation_alias="RF_API_KEY")
-    roboflow_workspace: str = Field(default="", validation_alias="RF_WORKSPACE")
+    # --- Roboflow credentials (plain env names, no FACE_RECON_ prefix). ROBOFLOW_API_KEY is the
+    # name the bundled inference server also expects, so a single value covers both. ---
+    roboflow_api_key: str = Field(default="", validation_alias="ROBOFLOW_API_KEY")
+    roboflow_workspace: str = Field(default="", validation_alias="ROBOFLOW_WORKSPACE")
     inference_server_url: str = "http://localhost:9001"
 
     # --- Camera stream (set to your camera's MJPEG/RTSP URL) ---
@@ -39,10 +41,11 @@ class Settings(BaseSettings):
     # either way, so the geometry gate is unchanged. ---
     pose_provider: str = "roboflow"
     local_pose_model_path: str = "models/yolov8n-pose.pt"
-    # Run the (expensive) pose model only while motion is asserted via POST /signal, or while
-    # actively evaluating, instead of on every frame. An integration with its own cheap motion
-    # trigger (PIR/camera) sets this and drives /signal, so pose runs only on a real trigger
-    # rather than 24/7. Default off so the standalone box stays purely camera-driven.
+    # Run the (expensive) pose model only while motion is asserted via POST /signal, or while it
+    # is actively evaluating, instead of on every frame. An integration that has its own cheap
+    # motion signal (a PIR, for example) can set this and drive /signal, so the pose model runs
+    # only on a real event rather than continuously. It is off by default, so the standalone box
+    # stays purely camera-driven.
     pose_requires_signal: bool = False
 
     # --- Identity match (ArcFace cosine; reference set built by enrolment/enrol.py) ---

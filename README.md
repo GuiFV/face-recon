@@ -105,7 +105,7 @@ committed.
 ## Running
 
 ```bash
-cp .env.example .env        # set RF_API_KEY, FACE_RECON_STREAM_URL, etc.
+cp .env.example .env        # set ROBOFLOW_API_KEY, FACE_RECON_STREAM_URL, etc.
 make up                     # docker compose: inference server, decision-service, Prometheus, Grafana
 ```
 

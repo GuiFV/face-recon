@@ -50,12 +50,12 @@ Two things it needs at runtime:
 ## Full stack (compose)
 
 `docker-compose.yml` brings up inference-server + decision-service + Prometheus + Grafana. It
-reads the repo-root `.env` for `RF_API_KEY` / `RF_WORKSPACE` and the `FACE_RECON_*` settings
+reads the repo-root `.env` for `ROBOFLOW_API_KEY` / `ROBOFLOW_WORKSPACE` and the `FACE_RECON_*` settings
 (run it from the repo root so `.env` is picked up).
 
 ## First-run checklist
 
-1. `cp .env.example .env` and fill in `RF_API_KEY`, `FACE_RECON_STREAM_URL`, etc.
+1. `cp .env.example .env` and fill in `ROBOFLOW_API_KEY`, `FACE_RECON_STREAM_URL`, etc.
 2. Build the reference set and place it at `enrolment/reference/known.npz` (see the enrolment
    guide).
 3. `docker compose build && docker compose up -d`.
