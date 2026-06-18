@@ -34,6 +34,17 @@ class Settings(BaseSettings):
     # --- Pose model: one call gives the person + their skeleton (confirm id on deploy) ---
     pose_model_id: str = "yolov8n-pose-640"
 
+    # --- Pose provider: "roboflow" (self-hosted inference server, metered) or "local"
+    # (ultralytics yolov8-pose, runs on this host, no Roboflow credits). Same COCO keypoints
+    # either way, so the geometry gate is unchanged. ---
+    pose_provider: str = "roboflow"
+    local_pose_model_path: str = "models/yolov8n-pose.pt"
+    # Run the (expensive) pose model only while motion is asserted via POST /signal, or while
+    # actively evaluating, instead of on every frame. An integration with its own cheap motion
+    # trigger (PIR/camera) sets this and drives /signal, so pose runs only on a real trigger
+    # rather than 24/7. Default off so the standalone box stays purely camera-driven.
+    pose_requires_signal: bool = False
+
     # --- Identity match (ArcFace cosine; reference set built by enrolment/enrol.py) ---
     # Live face matched against the reference set; the decision uses the mean of the top-k
     # similarities (robust to one lucky reference). The enrolled person's intra-cosine ~0.67

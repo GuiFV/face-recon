@@ -49,6 +49,15 @@ RUN python -c "from insightface.app import FaceAnalysis; FaceAnalysis(name='buff
  && wget -qO /app/models/face_landmarker.task \
       https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
 
+# Local pose option (FACE_RECON_POSE_PROVIDER=local): ultralytics yolov8-pose on the GPU. Blackwell
+# (sm_120) needs the cu128 torch build, same as onnxruntime-gpu above; verified on the RTX 5090
+# with torch 2.11.0+cu128. Install torch from the cu128 index BEFORE ultralytics so it uses the GPU
+# build, then bake the model so runtime needs no download.
+RUN pip install --no-cache-dir torch==2.11.0 torchvision \
+      --index-url https://download.pytorch.org/whl/cu128 \
+ && pip install --no-cache-dir ultralytics \
+ && (cd /app/models && python -c "from ultralytics import YOLO; YOLO('yolov8n-pose.pt')")
+
 EXPOSE 8000
 
 CMD ["python", "-m", "face_recon"]

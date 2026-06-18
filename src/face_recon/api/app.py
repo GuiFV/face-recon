@@ -42,6 +42,11 @@ def build_orchestrator(settings: Settings) -> Orchestrator:
     webhook = WebhookEmitter(settings.webhook_url_list)
     references = load_reference_set(settings.reference_path)
     inference = InferenceClient(settings.inference_server_url, settings.roboflow_api_key)
+    pose_provider = None
+    if settings.pose_provider == "local":
+        from face_recon.pipeline.pose import LocalPoseProvider
+
+        pose_provider = LocalPoseProvider(settings.local_pose_model_path)
     face_embedder = FaceEmbedder(use_gpu=settings.face_use_gpu)
     landmarks = LandmarkProvider(settings.face_landmarker_model_path)
     stream = StreamConsumer(settings.stream_url)
@@ -51,6 +56,7 @@ def build_orchestrator(settings: Settings) -> Orchestrator:
         webhook,
         references=references,
         inference=inference,
+        pose_provider=pose_provider,
         face_embedder=face_embedder,
         landmarks=landmarks,
         stream=stream,

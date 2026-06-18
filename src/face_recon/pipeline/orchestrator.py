@@ -63,6 +63,7 @@ class Orchestrator:
         references: list | None = None,
         clock: Callable[[], float] = time.monotonic,
         inference: InferenceClient | None = None,
+        pose_provider=None,
         face_embedder: FaceEmbedder | None = None,
         landmarks: LandmarkProvider | None = None,
         stream: StreamConsumer | None = None,
@@ -74,6 +75,9 @@ class Orchestrator:
         self.clock = clock
         # Live CV services. Left None in unit tests, which drive the pure methods.
         self._inference = inference
+        # Optional local pose provider (ultralytics); when set it replaces the inference server
+        # for pose, so no Roboflow credits are spent.
+        self._pose_provider = pose_provider
         self._face_embedder = face_embedder
         self._landmarks = landmarks
         self._stream = stream
@@ -183,10 +187,16 @@ class Orchestrator:
     # --- live wiring ---
 
     def _primary_pose(self, frame) -> Pose | None:
-        """Run the pose model on the frame and return the nearest person's pose."""
-        if self._inference is None:
+        """Run the pose model on the frame and return the nearest person's pose: via the local
+        provider when configured, otherwise the Roboflow inference server."""
+        if self._pose_provider is not None:
+            poses = self._pose_provider.poses(frame)
+        elif self._inference is not None:
+            poses = pose_stage.poses_from_frame(
+                frame, self._inference, self.settings.pose_model_id
+            )
+        else:
             return None
-        poses = pose_stage.poses_from_frame(frame, self._inference, self.settings.pose_model_id)
         return pose_stage.primary_pose(poses)
 
     def process_frame(
@@ -200,7 +210,15 @@ class Orchestrator:
         During a challenge we collect landmark signals instead of matching identity.
         """
         now = self.clock()
-        pose = self._primary_pose(frame)
+        # When pose is signal-gated, run the (expensive) pose model only while motion is asserted
+        # via an external trigger (POST /signal) or while actively evaluating; otherwise skip it
+        # so an idle scene never runs inference. Default (not gated) stays purely camera-driven.
+        run_pose = (
+            not self.settings.pose_requires_signal
+            or external_pir
+            or self.sm.state is AlarmState.EVALUATING
+        )
+        pose = self._primary_pose(frame) if run_pose else None
         person = pose is not None
         pir = external_pir or person  # camera-driven; an external PIR can also assert motion
 
