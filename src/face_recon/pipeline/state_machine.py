@@ -117,6 +117,18 @@ class StateMachine:
     def current_challenge(self) -> ChallengeKind | None:
         return self._challenge
 
+    def reset(self, now: float) -> None:
+        """Return to IDLE and hold the quiet timer, e.g. after a camera-stream reconnect: any
+        in-flight evaluation, challenge, or alarm is dropped rather than carried as stale state
+        across the gap, and the machine re-arms cleanly once the scene is quiet again."""
+        self.state = AlarmState.IDLE
+        self._last_pir = now
+        self._deadline = 0.0
+        self._good_streak = 0
+        self._challenge = None
+        self._retries_left = 0
+        self._alarm_quiet_since = None
+
     def update(self, p: Perception) -> list[Event]:
         if self._last_pir is None:
             self._last_pir = p.now

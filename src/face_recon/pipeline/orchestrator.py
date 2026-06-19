@@ -279,6 +279,12 @@ class Orchestrator:
                 for frame in stream.frames():
                     if not self._running:
                         break
+                    if frame is None:  # camera stream reconnected after a drop
+                        self.sm.reset(self.clock())
+                        self._challenge_signals.clear()
+                        self._pir_until = None
+                        logger.info("camera stream reconnected; state reset")
+                        continue
                     try:
                         self.process_frame(
                             frame,
