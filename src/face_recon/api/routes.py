@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
@@ -61,6 +61,20 @@ def signal(request: Request) -> dict:
     """Push an external motion/PIR pulse (kept 'hot' for a short window)."""
     request.app.state.orchestrator.push_signal()
     return {"ok": True}
+
+
+@router.get("/config/arm-delay")
+def get_arm_delay(request: Request) -> dict:
+    """Current auto-arm quiet delay, in seconds."""
+    return {"seconds": request.app.state.orchestrator.get_idle_quiet_seconds()}
+
+
+@router.post("/config/arm-delay")
+def set_arm_delay(request: Request, seconds: float = Query(..., gt=0, le=86400)) -> dict:
+    """Set the auto-arm quiet delay at runtime (seconds). Resets to the configured default when
+    the box restarts."""
+    request.app.state.orchestrator.set_idle_quiet_seconds(seconds)
+    return {"seconds": seconds}
 
 
 @router.get("/metrics")

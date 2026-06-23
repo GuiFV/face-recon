@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from dataclasses import replace
 
 from face_recon.core.config import Settings
 from face_recon.core.logging import get_logger
@@ -105,6 +106,15 @@ class Orchestrator:
     def push_signal(self) -> None:
         """An external motion/PIR pulse; keeps PIR 'hot' for a short window."""
         self._pir_until = self.clock() + self.settings.external_pir_ttl_seconds
+
+    def get_idle_quiet_seconds(self) -> float:
+        """How long the scene must stay quiet before the box auto-arms itself."""
+        return self.sm.cfg.idle_quiet_s
+
+    def set_idle_quiet_seconds(self, seconds: float) -> None:
+        """Change the auto-arm quiet delay at runtime. The StateMachineConfig is frozen, so we
+        swap in a copy; this resets to the configured default whenever the box restarts."""
+        self.sm.cfg = replace(self.sm.cfg, idle_quiet_s=seconds)
 
     def _external_pir_active(self, now: float) -> bool:
         return self._pir_until is not None and now < self._pir_until

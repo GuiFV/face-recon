@@ -30,3 +30,19 @@ def test_status_reports_initial_state():
     body = resp.json()
     assert body["state"] == "idle"
     assert body["challenge"] is None
+
+
+def test_arm_delay_get_returns_configured_default():
+    resp = _client().get("/config/arm-delay")
+    assert resp.status_code == 200
+    assert resp.json()["seconds"] == Settings(_env_file=None).idle_quiet_seconds
+
+
+def test_arm_delay_set_takes_effect():
+    client = _client()
+    assert client.post("/config/arm-delay", params={"seconds": 300}).status_code == 200
+    assert client.get("/config/arm-delay").json()["seconds"] == 300
+
+
+def test_arm_delay_rejects_non_positive():
+    assert _client().post("/config/arm-delay", params={"seconds": 0}).status_code == 422

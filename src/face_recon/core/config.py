@@ -69,7 +69,7 @@ class Settings(BaseSettings):
     external_pir_ttl_seconds: float = 5.0
 
     # --- State machine timing (seconds) ---
-    idle_quiet_seconds: float = 60.0  # seconds of quiet before the box auto-arms
+    idle_quiet_seconds: float = 1200.0  # seconds of quiet before the box auto-arms (20 min)
     arming_countdown_seconds: float = 10.0
     eval_window_seconds: float = 6.0
     challenge_window_seconds: float = 4.0
